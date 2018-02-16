@@ -1,5 +1,5 @@
 import os
-from copy import copy
+from copy import copy, deepcopy
 from logging import getLogger
 
 
@@ -77,9 +77,12 @@ class Config:
             if isinstance(v, Config):
                 ret[k] = v.to_dict(delete_keys=delete_keys)
             elif isinstance(v, list):
+                ret[k] = v = copy(v)
                 for i, vv in enumerate(v):
                     if isinstance(vv, Config):
                         v[i] = vv.to_dict(delete_keys=delete_keys)
+
+        ret = deepcopy(ret)
 
         if delete_keys:
             for k in delete_keys:

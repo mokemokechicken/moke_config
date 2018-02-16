@@ -80,9 +80,11 @@ def test_in():
 
 
 def test_to_dict():
-    config = Root.create(DICT)
+    config = Root.create(DICT)  # type: Root
     d = config.to_dict()
     assert 999 == d["section_a"]["something"]
     assert 888 == d["section_a"]["child_section"]["my_age"]
     assert 2 == len(d["list_of_section_a"])
     assert [3, 4, 5] == d["list_of_section_a"][0]["some_list"]
+
+    assert [3, 4, 5] == config.list_of_section_a[0].some_list
