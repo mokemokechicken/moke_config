@@ -12,8 +12,23 @@ Features
 * You can define default values in the classes and change them by a dictionary object recursively.
   * It is nice to use with yaml config files.
 
+Requirements
+----------
+
+* Python3
+
 How to use
 ===========
+
+Install
+---------
+
+```bash
+pip install moke_config
+```
+
+Code
+---------
 
 Like this.
 
