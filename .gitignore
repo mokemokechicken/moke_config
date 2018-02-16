@@ -2,3 +2,5 @@
 .pytest_cache
 .python-version
 __pycache__
+dist
+moke_config.egg-info
