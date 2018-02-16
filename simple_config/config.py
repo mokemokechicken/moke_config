@@ -7,8 +7,7 @@ logger = getLogger(__name__)
 
 class Config:
     def __init__(self, **kwargs):
-        if kwargs:
-            self._set_dict_value(kwargs)
+        self._set_dict_value(kwargs)
 
     def _set_dict_value(self, config_dict):
         assert isinstance(config_dict, dict)
@@ -16,20 +15,24 @@ class Config:
         for k, v in self.__dict__.items():
             if k.startswith('_'):
                 continue
+            value = config_dict.get(k)
             saved_value = config_dict.get(k, v)
 
-            if issubclass(v, Config):
-                value = config_dict.get(k)
+            if isinstance(v, type) and issubclass(v, Config):
                 if isinstance(value, dict):
-                    saved_value = v(value)
-                elif isinstance(value, list):
-                    saved_value = [v(x) for x in value]
+                    saved_value = v(**value)
                 elif k not in config_dict or value is None:
                     saved_value = v()
                 else:
                     logger.warning("expected dict like %s but %s" % (v, type(value)))
+            elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], type) and issubclass(v[0], Config):
+                if isinstance(value, list):
+                    saved_value = [v[0](**x) for x in value]
+                elif k not in config_dict or value is None:
+                    saved_value = []
+                else:
+                    logger.warning("expected list of dict like list[%s] but %s" % (v, type(value)))
             elif isinstance(v, Config):
-                value = config_dict.get(k)
                 if isinstance(value, dict):
                     v._set_dict_value(value)
                     saved_value = v
@@ -54,7 +57,11 @@ class Config:
         ret = copy(self.__dict__)
         for k, v in list(ret.items()):
             if isinstance(v, Config):
-                ret[k] = v.to_dict()
+                ret[k] = v.to_dict(delete_keys=delete_keys)
+            elif isinstance(v, list):
+                for i, vv in enumerate(v):
+                    if isinstance(vv, Config):
+                        v[i] = vv.to_dict(delete_keys=delete_keys)
 
         if delete_keys:
             for k in delete_keys:
