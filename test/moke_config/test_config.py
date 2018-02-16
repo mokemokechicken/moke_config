@@ -1,6 +1,6 @@
 import os
 
-from simple_config.config import Config, EnvValue
+from moke_config.config import Config, EnvValue
 
 
 class Root(Config):
@@ -9,6 +9,8 @@ class Root(Config):
         self.list_of_section_a = [SectionA]  # type: list[SectionA]
         self.working_dir = EnvValue("WD", "/my_working_dir")
         self.end_point = EnvValue("END_POINT", "your_endpoint")
+
+    data_path = property(lambda self: "%s/data" % self.working_dir)
 
 
 class SectionA(Config):
@@ -49,9 +51,10 @@ DICT = {
 
 
 def test_no_args():
-    config = Root.create()
+    config = Root.create()  # type: Root
     assert "hoge" == config.section_a.name
     assert "/my_working_dir" == config.working_dir
+    assert "/my_working_dir/data" == config.data_path
     assert [] == config.list_of_section_a
     assert [1, 2] == config.section_a.some_list
     assert "child" == config.section_a.child_section.my_name

@@ -12,6 +12,9 @@ class Config:
         config_dict = config_dict or {}
         obj = cls()
         obj._apply(config_dict)
+        if hasattr(obj, "_after_apply"):
+            # noinspection PyProtectedMember
+            obj._after_apply()
         return obj
 
     def _apply(self, config_dict=None):
@@ -22,32 +25,36 @@ class Config:
             if k.startswith('_'):
                 continue
             value = config_dict.get(k)
-            saved_value = config_dict.get(k, v)
+            stored_value = config_dict.get(k, v)
 
             if isinstance(v, type) and issubclass(v, Config):
                 if isinstance(value, dict):
-                    saved_value = v.create()
+                    stored_value = v.create()
                 elif k not in config_dict or value is None:
-                    saved_value = v.create(config_dict)
+                    stored_value = v.create(config_dict)
                 else:
                     logger.warning("expected dict like %s but %s" % (v, type(value)))
             elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], type) and issubclass(v[0], Config):
                 if isinstance(value, list):
-                    saved_value = [v[0].create(x) for x in value]
+                    stored_value = [v[0].create(x) for x in value]
                 elif k not in config_dict or value is None:
-                    saved_value = []
+                    stored_value = []
                 else:
                     logger.warning("expected list of dict like list[%s] but %s" % (v, type(value)))
             elif isinstance(v, Config):
                 if isinstance(value, dict):
-                    saved_value = v._apply(value)
+                    stored_value = v._apply(value)
                 else:
-                    saved_value = v
+                    stored_value = v
 
-            if isinstance(saved_value, EnvValue):
-                saved_value = saved_value.eval()
+            if isinstance(stored_value, EnvValue):
+                stored_value = stored_value.eval()
 
-            setattr(self, k, saved_value)
+            if callable(stored_value):
+                stored_value = property(fget=stored_value)
+                setattr(self.__class__, k, stored_value)
+            else:
+                setattr(self, k, stored_value)
 
         return self
 
@@ -88,6 +95,9 @@ class EnvValue:
 
     def eval(self):
         return os.environ.get(self.var_name, self.default_value)
+
+    def __str__(self):
+        return self.eval()
 
 
 def pprint_config(h):
