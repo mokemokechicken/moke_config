@@ -1,19 +1,19 @@
 import os
 
-from moke_config.config import Config, EnvValue
+from moke_config import ConfigBase, create_config, to_dict
 
 
-class Root(Config):
+class Root(ConfigBase):
     def __init__(self):
         self.section_a = SectionA()
         self.list_of_section_a = [SectionA]  # type: list[SectionA]
-        self.working_dir = EnvValue("WD", "/my_working_dir")
-        self.end_point = EnvValue("END_POINT", "your_endpoint")
+        self.working_dir = os.environ.get("WD", "/my_working_dir")
+        self.end_point = os.environ.get("END_POINT", "your_endpoint")
 
     data_path = property(lambda self: "%s/data" % self.working_dir)
 
 
-class SectionA(Config):
+class SectionA(ConfigBase):
     def __init__(self):
         self.name = "hoge"
         self.something = 10
@@ -21,7 +21,7 @@ class SectionA(Config):
         self.child_section = ChildSection()
 
 
-class ChildSection(Config):
+class ChildSection(ConfigBase):
     def __init__(self):
         self.my_name = "child"
         self.my_age = 20
@@ -51,7 +51,7 @@ DICT = {
 
 
 def test_no_args():
-    config = Root.create()  # type: Root
+    config = create_config(Root)  # type: Root
     assert "hoge" == config.section_a.name
     assert "/my_working_dir" == config.working_dir
     assert "/my_working_dir/data" == config.data_path
@@ -62,7 +62,7 @@ def test_no_args():
 
 def test_with_args():
     os.environ["END_POINT"] = "moon"
-    config = Root.create(DICT)
+    config = create_config(Root, DICT)  # type: Root
     assert "/my_working_dir" == config.working_dir
     assert "moon" == config.end_point
     assert 999 == config.section_a.something
@@ -74,14 +74,14 @@ def test_with_args():
 
 
 def test_in():
-    config = Root.create()
+    config = create_config(Root)  # type: Root
     assert "name" in config.section_a
     assert not ("age" in config.section_a)
 
 
 def test_to_dict():
-    config = Root.create(DICT)  # type: Root
-    d = config.to_dict()
+    config = create_config(Root, DICT)  # type: Root
+    d = to_dict(config)
     assert 999 == d["section_a"]["something"]
     assert 888 == d["section_a"]["child_section"]["my_age"]
     assert 2 == len(d["list_of_section_a"])
