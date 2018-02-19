@@ -6,7 +6,7 @@ requires = []
 
 setup(
     name='moke_config',
-    version='0.1.1',
+    version='0.2.1',
     description='This is a config utility for tree structure, PyCharm complement and overriding by dictionary.',
     url='https://github.com/mokemokechicken/moke_config',
     author='mokemokechicken',

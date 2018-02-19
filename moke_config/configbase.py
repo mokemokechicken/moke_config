@@ -76,6 +76,9 @@ class ConfigBase:
         """
         ret = copy(self.__dict__)
         for k, v in list(ret.items()):
+            if k.startswith("_"):
+                del ret[k]
+                continue
             if isinstance(v, ConfigBase):
                 ret[k] = v._to_dict(delete_keys=delete_keys)
             elif isinstance(v, list):
@@ -91,10 +94,3 @@ class ConfigBase:
                 if k in ret:
                     del ret[k]
         return ret
-
-
-def pprint_config(h):
-    if not isinstance(h, ConfigBase):
-        return str(h)
-    return "\n".join([str((str(k), pprint_config(v))) for k, v in sorted(to_dict(h).items())])
-
